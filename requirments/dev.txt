@@ -1,3 +1,0 @@
--r base.txt
-ruff
-Faker==37.8.0

@@ -1,6 +1,0 @@
-Django
-djangorestframework
-djangorestframework-simplejwt
-python-decouple
-Django==5.2.8
-django-unfold==0.108.0

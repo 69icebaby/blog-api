@@ -1,0 +1,19 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+{% block branding %}{% include "unfold/helpers/site_branding.html" %}{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
+{% for label, value in dashboard_totals.items %}
+<div style="padding:20px;border-radius:12px;background:var(--color-base-100);border:1px solid var(--color-base-200)"><div style="color:var(--color-base-500);text-transform:capitalize">{{ label }}</div><strong style="font-size:28px">{{ value }}</strong></div>
+{% endfor %}
+</div>
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+<section style="padding:20px;border-radius:12px;background:var(--color-base-100);border:1px solid var(--color-base-200)"><h2>Posts by category</h2>
+{% for category in category_chart %}<div style="margin:12px 0"><div style="display:flex;justify-content:space-between"><span>{{ category.name }}</span><span>{{ category.post_total }}</span></div><div style="height:8px;background:var(--color-base-200);border-radius:4px"><div style="height:8px;width:{% if category.post_total %}{{ category.post_total }}{% else %}1{% endif %}%;max-width:100%;background:#3b82f6;border-radius:4px"></div></div></div>{% empty %}<p>No categories yet.</p>{% endfor %}
+</section>
+<section style="padding:20px;border-radius:12px;background:var(--color-base-100);border:1px solid var(--color-base-200)"><h2>Published vs drafts</h2><p>Published: {{ published_percent }}%</p><div style="height:12px;background:var(--color-base-200);border-radius:8px"><div style="height:12px;width:{{ published_percent }}%;background:#22c55e;border-radius:8px"></div></div><p>Drafts: {{ draft_percent }}%</p><div style="height:12px;background:var(--color-base-200);border-radius:8px"><div style="height:12px;width:{{ draft_percent }}%;background:#f59e0b;border-radius:8px"></div></div></section>
+</div>
+<section style="margin-top:20px;padding:20px;border-radius:12px;background:var(--color-base-100);border:1px solid var(--color-base-200)"><h2>Top authors</h2><table style="width:100%;text-align:left"><thead><tr><th>Author</th><th>Email</th><th>Posts</th></tr></thead><tbody>{% for author in top_authors %}<tr><td>{{ author.first_name }} {{ author.last_name }}</td><td>{{ author.email }}</td><td>{{ author.post_total }}</td></tr>{% empty %}<tr><td colspan="3">No authors yet.</td></tr>{% endfor %}</tbody></table></section>
+{% endblock %}
