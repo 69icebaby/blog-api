@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import random
 import time
+from datetime import timedelta
 from typing import Any
 
 from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.utils import timezone
 from django.utils.text import slugify
 from faker import Faker
 
@@ -16,6 +18,10 @@ SEED_PASSWORD = "BlogSeedPassword2026!"
 DEFAULT_USERS = 20
 DEFAULT_POSTS = 100
 DEFAULT_COMMENTS = 500
+POST_DATE_RANGE_DAYS = 365
+UPDATE_POST_RATE = 0.3
+MIN_UPDATE_DELAY_DAYS = 1
+MAX_UPDATE_DELAY_DAYS = 30
 INACTIVE_USER_RATE = 0.15
 STAFF_USER_RATE = 0.1
 PUBLISHED_POST_RATE = 0.7
@@ -206,6 +212,26 @@ class Command(BaseCommand):
             )
             post.tags.set(selected_tags)
 
+        now = timezone.now()
+
+        for post in created_posts:
+            days_ago = random.randint(0, POST_DATE_RANGE_DAYS)
+            post.created_at = now - timedelta(days=days_ago)
+
+            post.updated_at = post.created_at
+
+            max_update_delay = min(
+                MAX_UPDATE_DELAY_DAYS,
+                days_ago,
+            )
+            if (
+                max_update_delay >= MIN_UPDATE_DELAY_DAYS
+                and random.random() < UPDATE_POST_RATE
+            ):
+                update_days = random.randint(MIN_UPDATE_DELAY_DAYS, max_update_delay)
+                post.updated_at += timedelta(days=update_days)
+        Post.objects.bulk_update(created_posts, ["created_at", "updated_at"])
+
         published_posts = list(Post.objects.filter(status=Post.Status.PUBLISHED))
         if comments_count and not published_posts:
             raise CommandError(
@@ -223,7 +249,16 @@ class Command(BaseCommand):
             )
             for _ in range(comments_count)
         ]
-        Comment.objects.bulk_create(comments)
+        created_comments = Comment.objects.bulk_create(comments)
+
+        for comment in created_comments:
+            post_created_at = comment.post.created_at
+
+            max_seconds = int((now - post_created_at).total_seconds())
+            random_seconds = random.randint(0, max_seconds)
+            comment.created_at = post_created_at + timedelta(seconds=random_seconds)
+
+        Comment.objects.bulk_update(created_comments, ["created_at"])
 
         elapsed = time.perf_counter() - started
         self.stdout.write(f"Users:      {len(users):5d} created")
